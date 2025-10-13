@@ -1,85 +1,220 @@
-# API de Marcação de Vôlei ⚽
+# API Galera Vôlei 🏐
 
 ## Sobre o Projeto
 
-Este projeto é uma **API REST** desenvolvida em **FastAPI** para gerenciar partidas de vôlei. O objetivo é permitir que jogadores se organizem, criem partidas, participem de jogos e avaliem suas experiências.
+API REST desenvolvida em **FastAPI** seguindo os **princípios SOLID** para gerenciar partidas de vôlei com **autenticação JWT**, **persistência em banco de dados** e **autorização baseada em roles**.
 
-## Funcionalidades Principais
+## 🏗️ Arquitetura SOLID
 
-### 👥 Gestão de Jogadores
-- **Cadastro de atletas** com diferentes níveis de habilidade
-- **Sistema de ranking** por categoria (noob, amador, intermediário, proplayer)
-- **Listagem de jogadores** e melhores atletas
+### **S** - Single Responsibility Principle
+- **Controllers**: Apenas lidam com requisições HTTP
+- **Services**: Contêm a lógica de negócio específica
+- **Repositories**: Responsáveis apenas pelo acesso aos dados
 
-### 🏐 Gestão de Partidas  
-- **Criação de partidas** com classificação por nível
-  - **Iniciante**: apenas jogadores noob
-  - **Normal**: jogadores amadores e intermediários
-  - **Ranked**: jogadores profissionais
-- **Ativar/desativar partidas**
-- **Controle de pontuação** durante os jogos
+### **O** - Open/Closed Principle  
+- **BaseRepository**: Interface extensível para novos repositories
+- **Services**: Podem ser estendidos sem modificar código existente
 
-### 🤝 Sistema de Participação
-- **Candidatura** para participar de partidas
-- **Aprovação/rejeição** de candidaturas pelo organizador
-- **Entrada controlada** baseada no nível do jogador
+### **L** - Liskov Substitution Principle
+- **Repositories**: Implementações podem ser substituídas
+- **Services**: Interfaces consistentes e substituíveis
 
-### ⭐ Sistema de Avaliações
-- **Avaliar partidas** após o jogo
-- **Avaliar organizadores** que criam as partidas  
-- **Avaliar outros jogadores** da partida
+### **I** - Interface Segregation Principle
+- **Middlewares**: Especializados por funcionalidade
+- **Schemas**: Separados por contexto (Create, Update, Response)
 
-### 👨‍💼 Gestão de Equipes
-- **Criar equipes** associando atletas
-- **Ranking de equipes** baseado em desempenho
+### **D** - Dependency Inversion Principle
+- **Dependency Injection**: Controllers dependem de abstrações
+- **Database**: Injetado via dependências do FastAPI
 
-## Tipos de Usuário
+## 📁 Estrutura do Projeto
 
-- **Noob**: Jogador iniciante
-- **Amador**: Jogador recreativo com experiência básica
-- **Intermediário**: Jogador com boa experiência
-- **Proplayer**: Jogador profissional/avançado
+```
+app/
+├── controllers/          # Controladores HTTP (API endpoints)
+│   ├── auth_controller.py
+│   ├── usuario_controller.py
+│   └── partida_controller.py
+├── services/            # Lógica de negócio
+│   ├── auth_service.py
+│   ├── usuario_service.py
+│   └── partida_service.py
+├── repositories/        # Camada de dados
+│   ├── base.py
+│   ├── usuario_repository.py
+│   └── partida_repository.py
+├── models/             # Modelos SQLAlchemy
+│   ├── models.py
+│   └── enums.py
+├── schemas/            # Schemas Pydantic
+│   └── schemas.py
+├── middlewares/        # Autenticação e autorização
+│   └── auth.py
+└── core/              # Configurações base
+    ├── config.py
+    ├── database.py
+    └── security.py
+```
 
-## Tecnologias Utilizadas
+## 🔐 Sistema de Autenticação & Autorização
 
-- **FastAPI**: Framework web moderno para APIs
-- **Pydantic**: Validação de dados e serialização
-- **Python**: Linguagem de programação
+### **JWT Authentication**
+- Tokens JWT para sessões seguras
+- Middleware de autenticação automática
+- Renovação de tokens
 
-## Como Usar
+### **Role-Based Authorization**
+- **Noob**: Acesso básico
+- **Amador**: Funcionalidades intermediárias  
+- **Intermediário**: Pode organizar partidas normais
+- **Proplayer**: Acesso total (admin)
 
-1. **Instale as dependências**:
-   ```bash
-   pip install fastapi uvicorn
-   ```
+### **Endpoints Protegidos**
+```python
+# Requer autenticação
+@router.get("/usuarios/me")
+def get_profile(current_user: Usuario = Depends(get_current_active_user))
 
-2. **Execute o servidor**:
-   ```bash
-   uvicorn api:app --reload
-   ```
+# Requer nível específico  
+@router.delete("/usuarios/{id}")
+def delete_user(current_user: Usuario = Depends(require_admin()))
+```
 
-3. **Acesse a documentação**:
-   - Swagger UI: `http://127.0.0.1:8000/docs`
-   - Redoc: `http://127.0.0.1:8000/redoc`
+## 💾 Persistência de Dados
 
-## Estrutura da API
+### **SQLAlchemy ORM**
+- Modelos relacionais completos
+- Migrations automáticas
+- Relacionamentos many-to-many
 
-A API segue uma estrutura REST com endpoints organizados por funcionalidade:
+### **Banco de Dados**
+- SQLite (desenvolvimento)
+- PostgreSQL (produção) - configurável
+- Schemas otimizados
 
-- `/partidas/*` - Gestão de partidas
-- `/atletas/*` - Gestão de jogadores  
-- `/equipes/*` - Gestão de equipes
-- `/organizadores/*` - Gestão de organizadores
+### **Relacionamentos**
+```python
+# Usuário ↔ Partidas (many-to-many)
+usuario.partidas_participadas
+partida.participantes
 
-## Objetivo Educacional
+# Usuário → Partidas organizadas (one-to-many) 
+usuario.partidas_organizadas
+partida.organizador
+```
 
-Este projeto foi desenvolvido como exercício acadêmico para demonstrar:
-- **Mapeamento de APIs REST**
-- **Definição de tipos de dados** (Request/Response)
-- **Organização de endpoints** por funcionalidade
-- **Boas práticas** de desenvolvimento com FastAPI
+## 🚀 Como Executar
+
+### 1. **Instalação**
+```bash
+# Clonar repositório
+git clone <repo-url>
+cd galera-volei
+
+# Instalar dependências
+pip install -r requirements.txt
+```
+
+### 2. **Configuração**
+```bash
+# Copiar e editar configurações
+cp .env.example .env
+
+# Inicializar banco de dados
+python init_db.py
+```
+
+### 3. **Execução**
+```bash
+# Desenvolvimento
+uvicorn api:app --reload
+
+# Produção
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+## 📚 Documentação da API
+
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/health`
+
+## 🔑 Credenciais Padrão
+
+Após executar `init_db.py`:
+
+```
+Admin:
+Email: admin@galeravolei.com  
+Senha: admin123
+
+Usuário Teste:
+Email: joao@exemplo.com
+Senha: 123456
+```
+
+## 🛣️ Principais Endpoints
+
+### **Autenticação**
+```http
+POST /api/v1/auth/register     # Registrar
+POST /api/v1/auth/login        # Login  
+POST /api/v1/auth/refresh      # Renovar token
+GET  /api/v1/auth/me           # Perfil atual
+```
+
+### **Usuários**
+```http
+GET    /api/v1/usuarios/              # Listar usuários
+GET    /api/v1/usuarios/ranking       # Ranking por pontuação
+GET    /api/v1/usuarios/melhores-atletas  # Melhores por taxa de vitória
+GET    /api/v1/usuarios/{id}          # Detalhes do usuário
+PUT    /api/v1/usuarios/{id}          # Atualizar usuário
+```
+
+### **Partidas**
+```http
+POST   /api/v1/partidas/              # Criar partida
+GET    /api/v1/partidas/              # Listar ativas
+GET    /api/v1/partidas/proximas      # Próximas partidas
+GET    /api/v1/partidas/minhas        # Minhas partidas
+PATCH  /api/v1/partidas/{id}/ativar   # Ativar partida
+PATCH  /api/v1/partidas/{id}/finalizar # Finalizar com pontuação
+```
+
+## 🎯 Funcionalidades Implementadas
+
+✅ **Autenticação JWT completa**  
+✅ **CRUD de usuários com roles**  
+✅ **CRUD de partidas com validações**  
+✅ **Sistema de ranking e estatísticas**  
+✅ **Middlewares de autorização**  
+✅ **Persistência em banco relacional**  
+✅ **Arquitetura SOLID**  
+✅ **Documentação automática**  
+✅ **Validação de dados com Pydantic**
+
+## 🔮 Próximas Funcionalidades
+
+- [ ] Sistema de candidaturas
+- [ ] Avaliações de partidas/jogadores  
+- [ ] Gestão de equipes
+- [ ] Upload de avatares
+- [ ] Notificações push
+- [ ] Dashboard analytics
+
+## 🎓 Objetivo Educacional
+
+Projeto desenvolvido para demonstrar:
+
+- **Arquitetura limpa** seguindo SOLID
+- **Segurança** com JWT e autorização
+- **Persistência** com ORM e relacionamentos
+- **APIs REST** profissionais com FastAPI
+- **Boas práticas** de desenvolvimento Python
 
 ---
 
-*Projeto desenvolvido para fins educacionais - Programação para internet II*
-*Professor Rogério Silva*
+**Programação para Internet II**  
+**Professor**: Rogério Silva  
+**IFPI Campus Teresina Central**

@@ -1,0 +1,4 @@
+from app.repositories.base import BaseRepository
+from app.repositories.usuario_repository import UsuarioRepository
+from app.repositories.partida_repository import PartidaRepository
+from app.repositories.equipe_repository import EquipeRepository
