@@ -1,0 +1,10 @@
+{
+  "titulo": "Partida Teste Confirmação",
+  "descricao": "Teste",
+  "tipo": "amistoso",
+  "categoria": "livre",
+  "data_partida": "2025-11-09T10:00:00-03:00",
+  "local": "Quadra Central",
+  "max_participantes": 12,
+  "publica": true
+}

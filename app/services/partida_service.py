@@ -235,19 +235,27 @@ class PartidaService:
             )
         
         # Adicionar usuário à partida (sem convidado_por_id - entrada direta)
-        # Participante precisa confirmar presença após entrar
+        # CONFIRMA AUTOMATICAMENTE ao entrar
         from app.models.models import partida_participantes
         from sqlalchemy import insert
+        from app.utils.partida_status import get_horario_brasil
+        
+        agora = get_horario_brasil()
         
         stmt = insert(partida_participantes).values(
             partida_id=partida.id,
             usuario_id=usuario.id,
             convidado_por_id=None,  # Entrada direta, sem convite
-            confirmado=False  # Precisa confirmar presença
+            confirmado=True,  # JÁ CONFIRMADO AUTOMATICAMENTE
+            data_confirmacao=agora  # Data da confirmação
         )
         self.db.execute(stmt)
         self.db.commit()
         self.db.refresh(partida)
+        
+        # Atualizar status da partida (pode mudar para MARCADA se todos confirmaram)
+        from app.utils.partida_status import atualizar_status_partida
+        atualizar_status_partida(partida, self.db)
         
         return partida
     

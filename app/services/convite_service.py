@@ -179,21 +179,28 @@ class ConviteService:
                 )
             
             # Adicionar à partida se ainda não estiver, registrando quem convidou
-            # Participante precisa confirmar presença após aceitar o convite
+            # CONFIRMA AUTOMATICAMENTE ao aceitar convite
             if usuario not in partida.participantes:
                 # Inserir manualmente com o campo convidado_por_id
                 from app.models.models import partida_participantes
                 from sqlalchemy import insert
+                from app.utils.partida_status import get_horario_brasil, atualizar_status_partida
+                
+                agora = get_horario_brasil()
                 
                 stmt = insert(partida_participantes).values(
                     partida_id=partida.id,
                     usuario_id=usuario.id,
                     convidado_por_id=convite.mandante_id,  # Registra quem convidou
-                    confirmado=False  # Precisa confirmar presença
+                    confirmado=True,  # JÁ CONFIRMADO AUTOMATICAMENTE
+                    data_confirmacao=agora  # Data da confirmação
                 )
                 self.db.execute(stmt)
                 self.db.commit()
                 self.db.refresh(partida)
+                
+                # Atualizar status da partida (pode mudar para MARCADA se todos confirmaram)
+                atualizar_status_partida(partida, self.db)
         
         return convite
     
