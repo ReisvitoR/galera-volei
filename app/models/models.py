@@ -47,7 +47,9 @@ class Usuario(Base):
     partidas_organizadas = relationship("Partida", back_populates="organizador")
     partidas_participadas = relationship(
         "Partida", 
-        secondary=partida_participantes, 
+        secondary=partida_participantes,
+        primaryjoin="Usuario.id == partida_participantes.c.usuario_id",
+        secondaryjoin="Partida.id == partida_participantes.c.partida_id",
         back_populates="participantes"
     )
     candidaturas = relationship("Candidatura", back_populates="usuario")
@@ -107,7 +109,9 @@ class Partida(Base):
     organizador = relationship("Usuario", back_populates="partidas_organizadas")
     participantes = relationship(
         "Usuario", 
-        secondary=partida_participantes, 
+        secondary=partida_participantes,
+        primaryjoin="Partida.id == partida_participantes.c.partida_id",
+        secondaryjoin="Usuario.id == partida_participantes.c.usuario_id",
         back_populates="partidas_participadas"
     )
     candidaturas = relationship("Candidatura", back_populates="partida")
