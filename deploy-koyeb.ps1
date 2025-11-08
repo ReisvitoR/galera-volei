@@ -15,7 +15,7 @@ if (-not (Test-Path "Dockerfile")) {
 
 # Verificar Git
 Write-Host "📋 Verificando Git..." -ForegroundColor Yellow
-$gitStatus = git status 2>&1
+git status 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Git não configurado ou não inicializado!" -ForegroundColor Red
     Write-Host "Execute: git init && git remote add origin <URL>`n" -ForegroundColor Yellow

@@ -1,12 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+import pytz
 from app.models import Partida, Usuario
 from app.models.enums import StatusPartida, TipoPartida, TipoUsuario, CategoriaPartida
 from app.repositories import PartidaRepository
 from app.schemas import PartidaCreate, PartidaUpdate
 from app.utils.categoria_utils import usuario_pode_participar, get_descricao_categoria
+
+
+def get_horario_brasil() -> datetime:
+    """Retorna o horário atual no timezone do Brasil (America/Sao_Paulo)"""
+    tz_brasil = pytz.timezone('America/Sao_Paulo')
+    return datetime.now(tz_brasil)
 
 
 class PartidaService:
@@ -24,11 +31,22 @@ class PartidaService:
         # Validar se organizador pode criar partida do tipo especificado
         self._validate_organizador_permissions(organizador, partida_data.tipo)
         
-        # Validar data da partida
-        if partida_data.data_partida <= datetime.now():
+        # Validar data da partida usando horário do Brasil
+        # Permite criar partida no mesmo dia, desde que seja pelo menos 1 minuto no futuro
+        agora_brasil = get_horario_brasil()
+        minimo_permitido = agora_brasil + timedelta(minutes=1)
+        
+        # Tornar data_partida aware se não for
+        data_partida = partida_data.data_partida
+        if data_partida.tzinfo is None:
+            # Se não tem timezone, assume que é horário do Brasil
+            tz_brasil = pytz.timezone('America/Sao_Paulo')
+            data_partida = tz_brasil.localize(data_partida)
+        
+        if data_partida < minimo_permitido:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Data da partida deve ser no futuro"
+                detail=f"Data da partida deve ser pelo menos 1 minuto no futuro. Horário atual (Brasil): {agora_brasil.strftime('%d/%m/%Y %H:%M')}"
             )
         
         # Criar partida
@@ -52,12 +70,22 @@ class PartidaService:
         if partida_data.tipo:
             self._validate_organizador_permissions(current_user, partida_data.tipo)
         
-        # Validar nova data se especificada
-        if partida_data.data_partida and partida_data.data_partida <= datetime.now():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Data da partida deve ser no futuro"
-            )
+        # Validar nova data se especificada (horário do Brasil, pelo menos 1 minuto no futuro)
+        if partida_data.data_partida:
+            agora_brasil = get_horario_brasil()
+            minimo_permitido = agora_brasil + timedelta(minutes=1)
+            
+            # Tornar data_partida aware se não for
+            data_partida = partida_data.data_partida
+            if data_partida.tzinfo is None:
+                tz_brasil = pytz.timezone('America/Sao_Paulo')
+                data_partida = tz_brasil.localize(data_partida)
+            
+            if data_partida < minimo_permitido:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Data da partida deve ser pelo menos 1 minuto no futuro. Horário atual (Brasil): {agora_brasil.strftime('%d/%m/%Y %H:%M')}"
+                )
         
         # Atualizar apenas campos não nulos
         update_data = {k: v for k, v in partida_data.dict().items() if v is not None}

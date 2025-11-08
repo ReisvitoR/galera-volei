@@ -26,7 +26,7 @@ Write-Host "✅ Autenticado como: $authCheck`n" -ForegroundColor Green
 
 # Verificar se app existe
 Write-Host "🔍 Verificando se app existe..." -ForegroundColor Yellow
-$appExists = flyctl status -a galera-volei 2>&1
+flyctl status -a galera-volei 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  App não existe, criando...`n" -ForegroundColor Yellow
     
