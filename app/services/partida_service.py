@@ -375,8 +375,9 @@ class PartidaService:
         """Confirmar presença do usuário na partida"""
         partida = self.get_partida(partida_id)
         
-        # Verificar se usuário está participando
-        if usuario not in partida.participantes:
+        # Verificar se usuário está participando (comparar IDs)
+        participante_ids = [p.id for p in partida.participantes]
+        if usuario.id not in participante_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Você não está participando desta partida"
@@ -410,8 +411,9 @@ class PartidaService:
         """Cancelar confirmação de presença do usuário"""
         partida = self.get_partida(partida_id)
         
-        # Verificar se usuário está participando
-        if usuario not in partida.participantes:
+        # Verificar se usuário está participando (comparar IDs)
+        participante_ids = [p.id for p in partida.participantes]
+        if usuario.id not in participante_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Você não está participando desta partida"
