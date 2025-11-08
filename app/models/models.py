@@ -5,11 +5,14 @@ from app.core.database import Base
 from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura, StatusConvite, CategoriaPartida
 
 # Tabela de associação many-to-many para participantes da partida
+# Agora com rastreamento de quem convidou
 partida_participantes = Table(
     'partida_participantes',
     Base.metadata,
     Column('partida_id', Integer, ForeignKey('partidas.id'), primary_key=True),
-    Column('usuario_id', Integer, ForeignKey('usuarios.id'), primary_key=True)
+    Column('usuario_id', Integer, ForeignKey('usuarios.id'), primary_key=True),
+    Column('convidado_por_id', Integer, ForeignKey('usuarios.id'), nullable=True),  # Quem convidou (null se entrou direto)
+    Column('data_entrada', DateTime(timezone=True), server_default=func.now())
 )
 
 # Tabela de associação many-to-many para membros da equipe

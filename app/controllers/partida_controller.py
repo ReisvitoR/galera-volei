@@ -191,6 +191,21 @@ def sair_partida(
     return partida_service.sair_partida(partida_id, current_user)
 
 
+@router.delete("/{partida_id}/participantes/{usuario_id}", response_model=PartidaResponse)
+def remover_participante(
+    partida_id: int = Path(..., description="ID da partida"),
+    usuario_id: int = Path(..., description="ID do usuário a ser removido"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user)
+):
+    """
+    Remover um participante da partida (apenas organizador)
+    """
+    partida_service = PartidaService(db)
+    return partida_service.remover_participante(partida_id, usuario_id, current_user)
+    return partida_service.sair_partida(partida_id, current_user)
+
+
 @router.patch("/{partida_id}/finalizar", response_model=PartidaResponse)
 def finalizar_partida(
     partida_id: int = Path(..., description="ID da partida"),

@@ -33,7 +33,7 @@ class ConviteService:
         print(f"DEBUG: convite_data: {convite_data}")
         print(f"DEBUG: mandante_id: {mandante_id}")
         
-        # Verificar se a partida existe e é privada
+        # Verificar se a partida existe
         partida = self.partida_repo.get(convite_data.partida_id)
         print(f"DEBUG: Partida encontrada: {partida}")
         if not partida:
@@ -42,11 +42,9 @@ class ConviteService:
                 detail="Partida não encontrada"
             )
         
-        if partida.publica:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Não é possível enviar convites para partidas públicas"
-            )
+        # Permitir convites tanto para partidas públicas quanto privadas
+        # Em partidas públicas, o convite serve como notificação/sugestão
+        # Em partidas privadas, o convite é obrigatório para participação
         
         # Verificar se o mandante tem permissão (deve ser o organizador)
         if partida.organizador_id != mandante_id:
@@ -135,7 +133,7 @@ class ConviteService:
             raise
     
     def aceitar_convite(self, convite_id: int, usuario_id: int) -> ConviteResponse:
-        """Aceitar um convite e adicionar o usuário à partida"""
+        """Aceitar um convite e adicionar o usuário à partida com vínculo de quem convidou"""
         
         # Aceitar o convite
         convite = self.convite_repo.aceitar_convite(convite_id, usuario_id)
@@ -160,10 +158,20 @@ class ConviteService:
                     detail="A partida já atingiu o número máximo de participantes"
                 )
             
-            # Adicionar à partida se ainda não estiver
+            # Adicionar à partida se ainda não estiver, registrando quem convidou
             if usuario not in partida.participantes:
-                partida.participantes.append(usuario)
+                # Inserir manualmente com o campo convidado_por_id
+                from app.models.models import partida_participantes
+                from sqlalchemy import insert
+                
+                stmt = insert(partida_participantes).values(
+                    partida_id=partida.id,
+                    usuario_id=usuario.id,
+                    convidado_por_id=convite.mandante_id  # Registra quem convidou
+                )
+                self.db.execute(stmt)
                 self.db.commit()
+                self.db.refresh(partida)
         
         return convite
     

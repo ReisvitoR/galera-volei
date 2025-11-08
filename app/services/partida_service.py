@@ -177,8 +177,16 @@ class PartidaService:
                 detail="Você já está participando desta partida"
             )
         
-        # Adicionar usuário à partida
-        partida.participantes.append(usuario)
+        # Adicionar usuário à partida (sem convidado_por_id - entrada direta)
+        from app.models.models import partida_participantes
+        from sqlalchemy import insert
+        
+        stmt = insert(partida_participantes).values(
+            partida_id=partida.id,
+            usuario_id=usuario.id,
+            convidado_por_id=None  # Entrada direta, sem convite
+        )
+        self.db.execute(stmt)
         self.db.commit()
         self.db.refresh(partida)
         
@@ -193,6 +201,49 @@ class PartidaService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Você não está participando desta partida"
+            )
+        
+        # Remover usuário da partida
+        partida.participantes.remove(usuario)
+        self.db.commit()
+        self.db.refresh(partida)
+        
+        return partida
+    
+    def remover_participante(self, partida_id: int, usuario_id: int, current_user: Usuario) -> Partida:
+        """Organizador remove um participante da partida"""
+        partida = self.get_partida(partida_id)
+        
+        # Verificar se quem está removendo é o organizador
+        if partida.organizador_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Apenas o organizador pode remover participantes"
+            )
+        
+        # Verificar se não está tentando remover a si mesmo
+        if usuario_id == current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não pode remover a si mesmo. Use o endpoint de sair da partida."
+            )
+        
+        # Buscar o usuário a ser removido
+        from app.repositories import UsuarioRepository
+        usuario_repo = UsuarioRepository(self.db)
+        usuario = usuario_repo.get(usuario_id)
+        
+        if not usuario:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado"
+            )
+        
+        # Verificar se usuário está participando
+        if usuario not in partida.participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Este usuário não está participando desta partida"
             )
         
         # Remover usuário da partida
