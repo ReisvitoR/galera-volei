@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
-from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura
+from pydantic import BaseModel, EmailStr, ConfigDict
+from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura, StatusConvite, CategoriaPartida
 
 # ========== USUARIO SCHEMAS ==========
 class UsuarioBase(BaseModel):
@@ -28,8 +28,7 @@ class UsuarioInDB(UsuarioBase):
     created_at: datetime
     updated_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UsuarioResponse(UsuarioInDB):
     pass
@@ -44,17 +43,18 @@ class UsuarioRanking(BaseModel):
     derrotas: int
     taxa_vitoria: float
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # ========== PARTIDA SCHEMAS ==========
 class PartidaBase(BaseModel):
     titulo: str
     descricao: Optional[str] = None
     tipo: TipoPartida
+    categoria: str = "livre"
     data_partida: datetime
     local: Optional[str] = None
     max_participantes: int = 12
+    publica: bool = True  # True = pública, False = privada
 
 class PartidaCreate(PartidaBase):
     pass
@@ -63,6 +63,7 @@ class PartidaUpdate(BaseModel):
     titulo: Optional[str] = None
     descricao: Optional[str] = None
     tipo: Optional[TipoPartida] = None
+    categoria: Optional[str] = None
     data_partida: Optional[datetime] = None
     local: Optional[str] = None
     max_participantes: Optional[int] = None
@@ -79,8 +80,7 @@ class PartidaInDB(PartidaBase):
     created_at: datetime
     updated_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PartidaResponse(PartidaInDB):
     organizador: UsuarioResponse
@@ -109,8 +109,7 @@ class EquipeInDB(EquipeBase):
     created_at: datetime
     updated_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class EquipeResponse(EquipeInDB):
     lider: UsuarioResponse
@@ -136,8 +135,7 @@ class CandidaturaInDB(CandidaturaBase):
     created_at: datetime
     updated_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CandidaturaResponse(CandidaturaInDB):
     usuario: UsuarioResponse
@@ -160,8 +158,7 @@ class AvaliacaoInDB(AvaliacaoBase):
     partida_id: int
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AvaliacaoResponse(AvaliacaoInDB):
     avaliador: UsuarioResponse
@@ -180,6 +177,35 @@ class TokenData(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
+
+# ========== CONVITE SCHEMAS ==========
+class ConviteBase(BaseModel):
+    mensagem: Optional[str] = None
+    data_expiracao: Optional[datetime] = None
+
+class ConviteCreate(ConviteBase):
+    convidado_id: int
+    partida_id: int
+
+class ConviteUpdate(BaseModel):
+    status: StatusConvite
+    mensagem: Optional[str] = None
+
+class ConviteInDB(ConviteBase):
+    id: int
+    status: StatusConvite
+    mandante_id: int
+    convidado_id: int
+    partida_id: int
+    created_at: datetime
+    updated_at: Optional[datetime]
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ConviteResponse(ConviteInDB):
+    mandante: UsuarioResponse
+    convidado: UsuarioResponse
+    partida: PartidaResponse
 
 # ========== RESPONSE SCHEMAS ==========
 class StatusResponse(BaseModel):

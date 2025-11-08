@@ -56,6 +56,28 @@ app/
     └── security.py
 ```
 
+## ⚡ Gerenciamento de Dependências com uv
+
+Este projeto utiliza **uv** como gerenciador de dependências para:
+
+- **🚀 Performance**: 10-100x mais rápido que pip
+- **🔒 Resolução determinística**: Lock files garantem reprodutibilidade
+- **📦 Gestão de ambiente**: Criação automática de ambientes virtuais
+- **🔄 Compatibilidade**: Funciona com pip e requirements.txt existentes
+
+### Principais comandos uv:
+```bash
+uv pip install <package>     # Instalar pacote no ambiente virtual
+uv pip install -r requirements.txt  # Instalar do requirements.txt
+uv pip list                  # Listar pacotes instalados
+uv pip uninstall <package>   # Remover pacote
+uv pip freeze                # Listar versões exatas
+
+# Executar no ambiente virtual automaticamente:
+.venv\Scripts\python.exe <comando>    # Windows
+.venv/bin/python <comando>            # Linux/macOS
+```
+
 ## 🔐 Sistema de Autenticação & Autorização
 
 ### **JWT Authentication**
@@ -105,13 +127,29 @@ partida.organizador
 
 ## 🚀 Como Executar
 
+### 0. **Pré-requisitos**
+```bash
+# Instalar uv (gerenciador de dependências Python ultra-rápido)
+# Windows (PowerShell)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Ou via pip
+pip install uv
+```
+
 ### 1. **Instalação**
 ```bash
 # Clonar repositório
 git clone <repo-url>
 cd galera-volei
 
-# Instalar dependências
+# Instalar dependências usando uv (recomendado)
+uv pip install -r requirements.txt
+
+# Ou usando pip (método tradicional)
 pip install -r requirements.txt
 ```
 
@@ -121,7 +159,11 @@ pip install -r requirements.txt
 # Edite o arquivo .env com suas configurações
 # SECRET_KEY deve ser alterada em produção
 
-# Inicializar banco com dados de exemplo
+# Inicializar banco com dados de exemplo usando uv
+.venv\Scripts\python.exe init_db.py  # Windows
+.venv/bin/python init_db.py          # Linux/macOS
+
+# Ou usando o método tradicional
 python init_db.py
 ```
 
@@ -137,25 +179,49 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ### 3. **Execução**
 ```bash
-# Desenvolvimento (com hot-reload)
+# Desenvolvimento (com hot-reload) usando uv
+.venv\Scripts\uvicorn.exe api:app --reload --host 0.0.0.0 --port 8000  # Windows
+.venv/bin/uvicorn api:app --reload --host 0.0.0.0 --port 8000          # Linux/macOS
+
+# Ou usando o método tradicional
 uvicorn api:app --reload --host 0.0.0.0 --port 8000
 
 # Produção
-uvicorn api:app --host 0.0.0.0 --port 8000
+.venv\Scripts\uvicorn.exe api:app --host 0.0.0.0 --port 8000
 ```
 
 ### 4. **Testes**
 ```bash
-# Testes rápidos e diretos
-python test_simple.py
+# Testes rápidos e diretos usando uv
+.venv\Scripts\python.exe test_simple.py  # Windows
+.venv/bin/python test_simple.py          # Linux/macOS
 
-# Testes profissionais com pytest
-pytest test_pytest.py -v
+# Testes profissionais com pytest usando uv
+.venv\Scripts\pytest.exe test_pytest.py -v  # Windows
+.venv/bin/pytest test_pytest.py -v          # Linux/macOS
 
 # Testes específicos por categoria
-pytest test_pytest.py::TestAuthentication -v
-pytest test_pytest.py::TestUsers -v
-pytest test_pytest.py::TestMatches -v
+.venv\Scripts\pytest.exe test_pytest.py::TestAuthentication -v
+.venv\Scripts\pytest.exe test_pytest.py::TestUsers -v
+.venv\Scripts\pytest.exe test_pytest.py::TestMatches -v
+
+# Métodos tradicionais (ainda funcionam)
+python test_simple.py
+pytest test_pytest.py -v
+```
+
+### 5. **Scripts de Desenvolvimento**
+```bash
+# Windows
+.\dev.bat
+
+# Linux/macOS
+./dev.sh
+
+# Estes scripts automaticamente:
+# 1. Sincronizam dependências
+# 2. Inicializam o banco de dados
+# 3. Iniciam o servidor de desenvolvimento
 ```
 
 ## 📚 Documentação da API

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, Path, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -8,7 +8,7 @@ from app.schemas import (
 from app.services import PartidaService
 from app.middlewares import get_current_active_user, require_intermediate_or_above
 from app.models import Usuario
-from app.models.enums import TipoPartida
+from app.models.enums import TipoPartida, CategoriaPartida
 
 router = APIRouter(prefix="/partidas", tags=["Partidas"])
 
@@ -30,14 +30,21 @@ def criar_partida(
 def listar_partidas_ativas(
     skip: int = Query(0, ge=0, description="Número de registros para pular"),
     limit: int = Query(100, ge=1, le=100, description="Limite de registros"),
+    categoria: Optional[str] = Query(None, description="Filtrar por categoria"),
+    apenas_acessiveis: bool = Query(False, description="Mostrar apenas partidas que o usuário pode participar"),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
     """
-    Listar partidas ativas
+    Listar partidas ativas com filtros opcionais por categoria
     """
     partida_service = PartidaService(db)
-    return partida_service.get_partidas_ativas(skip=skip, limit=limit)
+    return partida_service.get_partidas_ativas(
+        skip=skip, 
+        limit=limit, 
+        categoria=categoria,
+        usuario=current_user if apenas_acessiveis else None
+    )
 
 
 @router.get("/tipo/{tipo}", response_model=List[PartidaResponse])
@@ -156,6 +163,32 @@ def desativar_partida(
         success=True,
         message="Partida desativada com sucesso"
     )
+
+
+@router.post("/{partida_id}/participar", response_model=PartidaResponse)
+def participar_partida(
+    partida_id: int = Path(..., description="ID da partida"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user)
+):
+    """
+    Participar de uma partida pública (com validação de categoria)
+    """
+    partida_service = PartidaService(db)
+    return partida_service.participar_partida(partida_id, current_user)
+
+
+@router.delete("/{partida_id}/participar", response_model=PartidaResponse)
+def sair_partida(
+    partida_id: int = Path(..., description="ID da partida"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user)
+):
+    """
+    Sair de uma partida
+    """
+    partida_service = PartidaService(db)
+    return partida_service.sair_partida(partida_id, current_user)
 
 
 @router.patch("/{partida_id}/finalizar", response_model=PartidaResponse)

@@ -1,5 +1,5 @@
-from app.models.models import Usuario, Partida, Equipe, Candidatura, Avaliacao
-from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura
+from app.models.models import Usuario, Partida, Equipe, Candidatura, Avaliacao, Convite
+from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura, StatusConvite
 
 __all__ = [
     "Usuario",
@@ -7,8 +7,10 @@ __all__ = [
     "Equipe",
     "Candidatura",
     "Avaliacao",
+    "Convite",
     "TipoUsuario",
     "TipoPartida", 
     "StatusPartida",
-    "StatusCandidatura"
+    "StatusCandidatura",
+    "StatusConvite"
 ]

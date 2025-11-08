@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, func
 from app.models import Partida, Usuario
-from app.models.enums import StatusPartida, TipoPartida
+from app.models.enums import StatusPartida, TipoPartida, CategoriaPartida
 from app.repositories.base import BaseRepository
 
 
@@ -43,6 +43,19 @@ class PartidaRepository(BaseRepository[Partida]):
             self.db.query(Partida)
             .options(joinedload(Partida.organizador))
             .filter(Partida.tipo == tipo)
+            .filter(Partida.status == StatusPartida.ATIVA)
+            .order_by(Partida.data_partida)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+    
+    def get_by_categoria(self, categoria: str, skip: int = 0, limit: int = 100) -> List[Partida]:
+        """Buscar partidas por categoria"""
+        return (
+            self.db.query(Partida)
+            .options(joinedload(Partida.organizador))
+            .filter(Partida.categoria == categoria)
             .filter(Partida.status == StatusPartida.ATIVA)
             .order_by(Partida.data_partida)
             .offset(skip)

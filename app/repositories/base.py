@@ -17,10 +17,17 @@ class BaseRepository(Generic[T], ABC):
     
     def create(self, obj_in: Dict[str, Any]) -> T:
         """Criar novo registro"""
+        print(f"DEBUG BASE REPO: Criando objeto com dados: {obj_in}")
+        print(f"DEBUG BASE REPO: Tipo obj_in: {type(obj_in)}")
+        print(f"DEBUG BASE REPO: Model class: {self.model_class}")
+        
         db_obj = self.model_class(**obj_in)
+        print(f"DEBUG BASE REPO: Objeto criado: {db_obj}")
+        
         self.db.add(db_obj)
         self.db.commit()
         self.db.refresh(db_obj)
+        print(f"DEBUG BASE REPO: Objeto salvo: {db_obj}")
         return db_obj
     
     def get(self, id: int) -> Optional[T]:

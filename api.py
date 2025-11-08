@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.controllers import auth_controller, usuario_controller, partida_controller
+from app.controllers import auth_controller, usuario_controller, partida_controller, convite_controller
 
 # Criar tabelas do banco de dados
 Base.metadata.create_all(bind=engine)
@@ -48,3 +48,4 @@ def health_check():
 app.include_router(auth_controller.router, prefix=settings.API_V1_STR)
 app.include_router(usuario_controller.router, prefix=settings.API_V1_STR)
 app.include_router(partida_controller.router, prefix=settings.API_V1_STR)
+app.include_router(convite_controller.router, prefix=f"{settings.API_V1_STR}/convites", tags=["convites"])

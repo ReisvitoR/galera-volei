@@ -4,8 +4,13 @@ from jose import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
 
-# Password context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password context with explicit configuration for compatibility
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__rounds=12,
+    bcrypt__default_rounds=12
+)
 
 
 class Security:
@@ -41,12 +46,18 @@ class Security:
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        """Verify password"""
+        """Verify password - truncate to 72 bytes for bcrypt compatibility"""
+        # Bcrypt has a 72-byte limit, so we truncate longer passwords
+        if len(plain_password.encode('utf-8')) > 72:
+            plain_password = plain_password[:72]
         return pwd_context.verify(plain_password, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        """Hash password"""
+        """Hash password - truncate to 72 bytes for bcrypt compatibility"""
+        # Bcrypt has a 72-byte limit, so we truncate longer passwords
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
         return pwd_context.hash(password)
 
 

@@ -3,9 +3,10 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models import Partida, Usuario
-from app.models.enums import StatusPartida, TipoPartida, TipoUsuario
+from app.models.enums import StatusPartida, TipoPartida, TipoUsuario, CategoriaPartida
 from app.repositories import PartidaRepository
 from app.schemas import PartidaCreate, PartidaUpdate
+from app.utils.categoria_utils import usuario_pode_participar, get_descricao_categoria
 
 
 class PartidaService:
@@ -73,9 +74,34 @@ class PartidaService:
             )
         return partida
     
-    def get_partidas_ativas(self, skip: int = 0, limit: int = 100) -> List[Partida]:
-        """Listar partidas ativas"""
-        return self.repository.get_by_status(StatusPartida.ATIVA, skip=skip, limit=limit)
+    def get_partidas_ativas(self, skip: int = 0, limit: int = 100, categoria: Optional[str] = None, usuario: Optional[Usuario] = None) -> List[Partida]:
+        """Listar partidas ativas com filtros opcionais"""
+        if categoria:
+            partidas = self.repository.get_by_categoria(categoria, skip=skip, limit=limit)
+        else:
+            partidas = self.repository.get_by_status(StatusPartida.ATIVA, skip=skip, limit=limit)
+        
+        # Filtrar partidas acessíveis ao usuário se solicitado
+        if usuario:
+            partidas_acessiveis = []
+            for partida in partidas:
+                # Verificar se a partida tem categoria definida
+                if hasattr(partida, 'categoria') and partida.categoria:
+                    try:
+                        categoria_enum = CategoriaPartida(partida.categoria) if isinstance(partida.categoria, str) else partida.categoria
+                        if usuario_pode_participar(usuario.tipo, categoria_enum):
+                            partidas_acessiveis.append(partida)
+                    except ValueError:
+                        # Se não conseguir converter, assume LIVRE para retrocompatibilidade
+                        if usuario_pode_participar(usuario.tipo, CategoriaPartida.LIVRE):
+                            partidas_acessiveis.append(partida)
+                else:
+                    # Se não tem categoria, assume LIVRE (para retrocompatibilidade)
+                    if usuario_pode_participar(usuario.tipo, CategoriaPartida.LIVRE):
+                        partidas_acessiveis.append(partida)
+            return partidas_acessiveis
+        
+        return partidas
     
     def get_partidas_by_tipo(self, tipo: TipoPartida, skip: int = 0, limit: int = 100) -> List[Partida]:
         """Listar partidas por tipo"""
@@ -116,6 +142,65 @@ class PartidaService:
             )
         
         return self.repository.update(partida, {"status": StatusPartida.INATIVA})
+    
+    def participar_partida(self, partida_id: int, usuario: Usuario) -> Partida:
+        """Usuário se inscreve para participar de uma partida pública"""
+        partida = self.get_partida(partida_id)
+        
+        # Verificar se a partida é pública
+        if not partida.publica:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Esta partida é privada. Participação apenas por convite."
+            )
+        
+        # Verificar se usuário pode participar da categoria
+        categoria_enum = CategoriaPartida(partida.categoria) if isinstance(partida.categoria, str) else partida.categoria
+        if not usuario_pode_participar(usuario.tipo, categoria_enum):
+            categoria_desc = get_descricao_categoria(categoria_enum)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Seu nível não permite participar desta partida. Categoria: {categoria_desc}. Seu nível: {usuario.tipo.value}"
+            )
+        
+        # Verificar se não está lotada
+        if len(partida.participantes) >= partida.max_participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Partida já atingiu o número máximo de participantes"
+            )
+        
+        # Verificar se usuário já está participando
+        if usuario in partida.participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você já está participando desta partida"
+            )
+        
+        # Adicionar usuário à partida
+        partida.participantes.append(usuario)
+        self.db.commit()
+        self.db.refresh(partida)
+        
+        return partida
+    
+    def sair_partida(self, partida_id: int, usuario: Usuario) -> Partida:
+        """Usuário sai de uma partida"""
+        partida = self.get_partida(partida_id)
+        
+        # Verificar se usuário está participando
+        if usuario not in partida.participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não está participando desta partida"
+            )
+        
+        # Remover usuário da partida
+        partida.participantes.remove(usuario)
+        self.db.commit()
+        self.db.refresh(partida)
+        
+        return partida
     
     def finalizar_partida(self, partida_id: int, pontos_a: int, pontos_b: int, current_user: Usuario) -> Partida:
         """Finalizar partida com pontuação"""
