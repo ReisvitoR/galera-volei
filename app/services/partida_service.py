@@ -2,12 +2,18 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-import pytz
+import pytz  # type: ignore
 from app.models import Partida, Usuario
 from app.models.enums import StatusPartida, TipoPartida, TipoUsuario, CategoriaPartida
 from app.repositories import PartidaRepository
-from app.schemas import PartidaCreate, PartidaUpdate
+from app.schemas import PartidaCreate, PartidaUpdate, StatusResponse
 from app.utils.categoria_utils import usuario_pode_participar, get_descricao_categoria
+from app.utils.partida_status import (
+    atualizar_status_partida, 
+    verificar_confirmacoes,
+    confirmar_presenca,
+    cancelar_confirmacao
+)
 
 
 def get_horario_brasil() -> datetime:
@@ -93,13 +99,22 @@ class PartidaService:
         return self.repository.update(partida, update_data)
     
     def get_partida(self, partida_id: int) -> Partida:
-        """Buscar partida por ID"""
+        """Buscar partida por ID e atualizar seu status automaticamente"""
         partida = self.repository.get_with_details(partida_id)
         if not partida:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Partida não encontrada"
             )
+        
+        # Atualizar status automaticamente baseado no horário e confirmações
+        atualizar_status_partida(partida, self.db)
+        
+        # Adicionar informações de confirmação
+        confirmacoes = verificar_confirmacoes(partida, self.db)
+        partida.participantes_confirmados = confirmacoes['participantes_confirmados']
+        partida.todos_confirmaram = confirmacoes['todos_confirmaram']
+        
         return partida
     
     def get_partidas_ativas(self, skip: int = 0, limit: int = 100, categoria: Optional[str] = None, usuario: Optional[Usuario] = None) -> List[Partida]:
@@ -175,6 +190,20 @@ class PartidaService:
         """Usuário se inscreve para participar de uma partida pública"""
         partida = self.get_partida(partida_id)
         
+        # Verificar se a partida está finalizada ou cancelada
+        if partida.status in [StatusPartida.FINALIZADA, StatusPartida.CANCELADA]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Não é possível entrar em uma partida {partida.status.value}"
+            )
+        
+        # Verificar se a partida já começou ou está em andamento
+        if partida.status == StatusPartida.EM_ANDAMENTO:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Não é possível entrar em uma partida que já está em andamento"
+            )
+        
         # Verificar se a partida é pública
         if not partida.publica:
             raise HTTPException(
@@ -206,13 +235,15 @@ class PartidaService:
             )
         
         # Adicionar usuário à partida (sem convidado_por_id - entrada direta)
+        # Participante precisa confirmar presença após entrar
         from app.models.models import partida_participantes
         from sqlalchemy import insert
         
         stmt = insert(partida_participantes).values(
             partida_id=partida.id,
             usuario_id=usuario.id,
-            convidado_por_id=None  # Entrada direta, sem convite
+            convidado_por_id=None,  # Entrada direta, sem convite
+            confirmado=False  # Precisa confirmar presença
         )
         self.db.execute(stmt)
         self.db.commit()
@@ -338,4 +369,74 @@ class PartidaService:
                 partidas_jogadas=1,
                 vitorias=1 if venceu else 0,
                 pontos=pontos_ganhos
+            )
+    
+    def confirmar_presenca_usuario(self, partida_id: int, usuario: Usuario) -> StatusResponse:
+        """Confirmar presença do usuário na partida"""
+        partida = self.get_partida(partida_id)
+        
+        # Verificar se usuário está participando
+        if usuario not in partida.participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não está participando desta partida"
+            )
+        
+        # Verificar se partida ainda não começou
+        agora = get_horario_brasil()
+        if partida.data_partida <= agora:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Não é possível confirmar presença após o início da partida"
+            )
+        
+        # Confirmar presença
+        if confirmar_presenca(partida_id, usuario.id, self.db):
+            # Atualizar status da partida (pode mudar para MARCADA)
+            atualizar_status_partida(partida, self.db)
+            
+            return StatusResponse(
+                success=True,
+                message="Presença confirmada com sucesso",
+                data=verificar_confirmacoes(partida, self.db)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erro ao confirmar presença"
+            )
+    
+    def cancelar_confirmacao_usuario(self, partida_id: int, usuario: Usuario) -> StatusResponse:
+        """Cancelar confirmação de presença do usuário"""
+        partida = self.get_partida(partida_id)
+        
+        # Verificar se usuário está participando
+        if usuario not in partida.participantes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Você não está participando desta partida"
+            )
+        
+        # Verificar se partida ainda não começou
+        agora = get_horario_brasil()
+        if partida.data_partida <= agora:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Não é possível cancelar confirmação após o início da partida"
+            )
+        
+        # Cancelar confirmação
+        if cancelar_confirmacao(partida_id, usuario.id, self.db):
+            # Atualizar status da partida (pode voltar para ATIVA)
+            atualizar_status_partida(partida, self.db)
+            
+            return StatusResponse(
+                success=True,
+                message="Confirmação cancelada com sucesso",
+                data=verificar_confirmacoes(partida, self.db)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erro ao cancelar confirmação"
             )

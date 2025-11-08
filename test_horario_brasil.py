@@ -2,7 +2,7 @@
 Teste para validar horários do Brasil na criação de partidas
 """
 from datetime import datetime, timedelta
-import pytz
+import pytz  # type: ignore
 
 def get_horario_brasil():
     """Retorna o horário atual no timezone do Brasil"""

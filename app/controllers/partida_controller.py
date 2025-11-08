@@ -203,7 +203,32 @@ def remover_participante(
     """
     partida_service = PartidaService(db)
     return partida_service.remover_participante(partida_id, usuario_id, current_user)
-    return partida_service.sair_partida(partida_id, current_user)
+
+
+@router.post("/{partida_id}/confirmar", response_model=StatusResponse)
+def confirmar_presenca(
+    partida_id: int = Path(..., description="ID da partida"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user)
+):
+    """
+    Confirmar presença na partida
+    """
+    partida_service = PartidaService(db)
+    return partida_service.confirmar_presenca_usuario(partida_id, current_user)
+
+
+@router.delete("/{partida_id}/confirmar", response_model=StatusResponse)
+def cancelar_confirmacao_presenca(
+    partida_id: int = Path(..., description="ID da partida"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_active_user)
+):
+    """
+    Cancelar confirmação de presença na partida
+    """
+    partida_service = PartidaService(db)
+    return partida_service.cancelar_confirmacao_usuario(partida_id, current_user)
 
 
 @router.patch("/{partida_id}/finalizar", response_model=PartidaResponse)

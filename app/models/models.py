@@ -5,14 +5,16 @@ from app.core.database import Base
 from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCandidatura, StatusConvite, CategoriaPartida
 
 # Tabela de associação many-to-many para participantes da partida
-# Agora com rastreamento de quem convidou
+# Agora com rastreamento de quem convidou e confirmação de presença
 partida_participantes = Table(
     'partida_participantes',
     Base.metadata,
     Column('partida_id', Integer, ForeignKey('partidas.id'), primary_key=True),
     Column('usuario_id', Integer, ForeignKey('usuarios.id'), primary_key=True),
     Column('convidado_por_id', Integer, ForeignKey('usuarios.id'), nullable=True),  # Quem convidou (null se entrou direto)
-    Column('data_entrada', DateTime(timezone=True), server_default=func.now())
+    Column('data_entrada', DateTime(timezone=True), server_default=func.now()),
+    Column('confirmado', Boolean, default=False),  # Se o participante confirmou presença
+    Column('data_confirmacao', DateTime(timezone=True), nullable=True)  # Quando confirmou
 )
 
 # Tabela de associação many-to-many para membros da equipe
@@ -87,7 +89,9 @@ class Partida(Base):
     tipo = Column(Enum(TipoPartida), nullable=False)
     categoria = Column(String(20), nullable=False, default="livre")
     status = Column(Enum(StatusPartida), default=StatusPartida.ATIVA)
-    data_partida = Column(DateTime(timezone=True), nullable=False)
+    data_partida = Column(DateTime(timezone=True), nullable=False)  # Data/hora de início
+    data_fim = Column(DateTime(timezone=True), nullable=True)  # Data/hora de término (opcional)
+    duracao_estimada = Column(Integer, default=120)  # Duração em minutos (padrão: 2 horas)
     local = Column(String(255))
     max_participantes = Column(Integer, default=12)
     publica = Column(Boolean, default=True)  # True = pública, False = privada

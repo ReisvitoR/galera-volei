@@ -7,7 +7,7 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.repositories.partida_repository import PartidaRepository
 from app.schemas.schemas import ConviteCreate, ConviteUpdate, ConviteResponse
 from app.models.models import Convite
-from app.models.enums import StatusConvite, CategoriaPartida
+from app.models.enums import StatusConvite, CategoriaPartida, StatusPartida
 from app.utils.categoria_utils import usuario_pode_participar, get_descricao_categoria
 
 
@@ -148,6 +148,26 @@ class ConviteService:
         usuario = self.usuario_repo.get(usuario_id)
         
         if partida and usuario:
+            # Verificar se a partida está finalizada ou cancelada
+            if partida.status in [StatusPartida.FINALIZADA, StatusPartida.CANCELADA]:
+                # Reverter o status do convite
+                convite.status = StatusConvite.PENDENTE
+                self.db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Não é possível aceitar convite de partida {partida.status.value}"
+                )
+            
+            # Verificar se a partida já começou
+            if partida.status == StatusPartida.EM_ANDAMENTO:
+                # Reverter o status do convite
+                convite.status = StatusConvite.PENDENTE
+                self.db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Não é possível aceitar convite de partida que já está em andamento"
+                )
+            
             # Verificar se não está lotada
             if len(partida.participantes) >= partida.max_participantes:
                 # Reverter o status do convite
@@ -159,6 +179,7 @@ class ConviteService:
                 )
             
             # Adicionar à partida se ainda não estiver, registrando quem convidou
+            # Participante precisa confirmar presença após aceitar o convite
             if usuario not in partida.participantes:
                 # Inserir manualmente com o campo convidado_por_id
                 from app.models.models import partida_participantes
@@ -167,7 +188,8 @@ class ConviteService:
                 stmt = insert(partida_participantes).values(
                     partida_id=partida.id,
                     usuario_id=usuario.id,
-                    convidado_por_id=convite.mandante_id  # Registra quem convidou
+                    convidado_por_id=convite.mandante_id,  # Registra quem convidou
+                    confirmado=False  # Precisa confirmar presença
                 )
                 self.db.execute(stmt)
                 self.db.commit()

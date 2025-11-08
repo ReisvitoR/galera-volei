@@ -24,9 +24,12 @@ class CategoriaPartida(PyEnum):
 
 
 class StatusPartida(PyEnum):
-    ATIVA = "ativa"
-    INATIVA = "inativa"
-    FINALIZADA = "finalizada"
+    ATIVA = "ativa"              # Criada, aguardando participantes
+    MARCADA = "marcada"          # Todos confirmaram presença
+    EM_ANDAMENTO = "em_andamento"  # Partida acontecendo agora
+    FINALIZADA = "finalizada"    # Partida terminada
+    CANCELADA = "cancelada"      # Partida cancelada
+    INATIVA = "inativa"          # Desativada pelo organizador
 
 
 class StatusCandidatura(PyEnum):

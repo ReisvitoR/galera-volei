@@ -51,7 +51,9 @@ class PartidaBase(BaseModel):
     descricao: Optional[str] = None
     tipo: TipoPartida
     categoria: str = "livre"
-    data_partida: datetime
+    data_partida: datetime  # Hora de início
+    data_fim: Optional[datetime] = None  # Hora de término (opcional)
+    duracao_estimada: int = 120  # Duração em minutos (padrão: 2 horas)
     local: Optional[str] = None
     max_participantes: int = 12
     publica: bool = True  # True = pública, False = privada
@@ -65,6 +67,8 @@ class PartidaUpdate(BaseModel):
     tipo: Optional[TipoPartida] = None
     categoria: Optional[str] = None
     data_partida: Optional[datetime] = None
+    data_fim: Optional[datetime] = None
+    duracao_estimada: Optional[int] = None
     local: Optional[str] = None
     max_participantes: Optional[int] = None
     status: Optional[StatusPartida] = None
@@ -86,6 +90,8 @@ class PartidaResponse(PartidaInDB):
     organizador: UsuarioResponse
     participantes: List[UsuarioResponse] = []
     total_participantes: int = 0
+    participantes_confirmados: int = 0  # Quantos confirmaram presença
+    todos_confirmaram: bool = False  # Se todos os participantes confirmaram
 
 # ========== EQUIPE SCHEMAS ==========
 class EquipeBase(BaseModel):
