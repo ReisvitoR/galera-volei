@@ -66,7 +66,7 @@ class PartidaService:
         partida = self.get_partida(partida_id)
         
         # Verificar se usuário pode alterar a partida
-        if partida.organizador_id != current_user.id and current_user.tipo != TipoUsuario.PROPLAYER:
+        if partida.organizador_id != current_user.id and current_user.tipo != TipoUsuario.PROFISSIONAL:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Sem permissão para alterar esta partida"
@@ -178,7 +178,7 @@ class PartidaService:
         """Desativar partida"""
         partida = self.get_partida(partida_id)
         
-        if partida.organizador_id != current_user.id and current_user.tipo != TipoUsuario.PROPLAYER:
+        if partida.organizador_id != current_user.id and current_user.tipo != TipoUsuario.PROFISSIONAL:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Sem permissão para desativar esta partida"
@@ -345,10 +345,10 @@ class PartidaService:
     
     def _validate_organizador_permissions(self, organizador: Usuario, tipo_partida: TipoPartida):
         """Validar se organizador pode criar partida do tipo especificado"""
-        if tipo_partida == TipoPartida.RANKED and organizador.tipo not in [TipoUsuario.INTERMEDIARIO, TipoUsuario.PROPLAYER]:
+        if tipo_partida == TipoPartida.COMPETITIVA and organizador.tipo not in [TipoUsuario.INTERMEDIARIO, TipoUsuario.AVANCADO, TipoUsuario.PROFISSIONAL]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Apenas usuários intermediários ou profissionais podem organizar partidas ranked"
+                detail="Apenas usuários intermediários, avançados ou profissionais podem organizar partidas competitivas"
             )
     
     def _update_participant_stats(self, partida: Partida, pontos_a: int, pontos_b: int):
@@ -369,8 +369,8 @@ class PartidaService:
             venceu = (eh_equipe_a and vencedor_equipe_a) or (not eh_equipe_a and not vencedor_equipe_a)
             
             pontos_ganhos = 10 if venceu else 5  # Pontos base
-            if partida.tipo == TipoPartida.RANKED:
-                pontos_ganhos *= 2  # Dobra pontos em partidas ranked
+            if partida.tipo == TipoPartida.COMPETITIVA:
+                pontos_ganhos *= 2  # Dobra pontos em partidas competitivas
             
             user_repo.update_stats(
                 participante.id,

@@ -33,7 +33,7 @@ class Usuario(Base):
     nome = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
-    tipo = Column(Enum(TipoUsuario), nullable=False, default=TipoUsuario.NOOB)
+    tipo = Column(Enum(TipoUsuario), nullable=False, default=TipoUsuario.INICIANTE)
     ativo = Column(Boolean, default=True)
     pontuacao_total = Column(Integer, default=0)
     partidas_jogadas = Column(Integer, default=0)

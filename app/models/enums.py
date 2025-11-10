@@ -2,25 +2,24 @@ from enum import Enum as PyEnum
 
 
 class TipoUsuario(PyEnum):
-    NOOB = "noob"
-    AMADOR = "amador"
+    INICIANTE = "iniciante"
     INTERMEDIARIO = "intermediario"
-    PROPLAYER = "proplayer"
+    AVANCADO = "avancado"
+    PROFISSIONAL = "profissional"
 
 
 class TipoPartida(PyEnum):
-    INICIANTE = "iniciante"
-    NORMAL = "normal"
-    RANKED = "ranked"
+    AMISTOSA = "amistosa"  # Partida casual, sem pontuação
+    COMPETITIVA = "competitiva"  # Partida ranqueada, conta pontos
 
 
 class CategoriaPartida(PyEnum):
     """Categoria que define o nível mínimo dos jogadores"""
-    NOOB = "noob"          # Apenas para jogadores noob
-    AMADOR = "amador"      # Para amadores e acima
-    INTERMEDIARIO = "intermediario"  # Para intermediários e avançados
-    AVANCADO = "avancado"  # Apenas para jogadores avançados
-    LIVRE = "livre"        # Qualquer nível pode participar
+    INICIANTE = "iniciante"          # Apenas para jogadores iniciantes
+    INTERMEDIARIO = "intermediario"  # Para jogadores intermediários
+    AVANCADO = "avancado"            # Para jogadores avançados  
+    PROFISSIONAL = "profissional"    # Para jogadores profissionais
+    LIVRE = "livre"                  # Qualquer nível pode participar
 
 
 class StatusPartida(PyEnum):

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = Field(default=["*"])
     
     # Database
-    DATABASE_URL: str = "sqlite:///./galera_volei.db"
+    DATABASE_URL: str = "postgresql://koyeb-adm:npg_h9oeRMuWa3Li@ep-broad-rice-a2qzyo05.eu-central-1.pg.koyeb.app/koyebdb"
     
     # Security
     SECRET_KEY: str = "sua-chave-secreta-super-forte-aqui"
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     PWD_CONTEXT_DEPRECATED: str = "auto"
     
     model_config = {
-        "env_file": ".env",
+        "env_file": os.getenv("ENV_FILE", ".env"),
         "case_sensitive": True
     }
 

@@ -10,26 +10,26 @@ def usuario_pode_participar(tipo_usuario: TipoUsuario, categoria_partida: Catego
     
     Regras:
     - LIVRE: Qualquer jogador pode participar
-    - NOOB: Apenas jogadores noob
-    - AMADOR: Amadores e jogadores de nível superior
-    - INTERMEDIARIO: Intermediários e avançados
-    - AVANCADO: Apenas jogadores avançados
+    - INICIANTE: Apenas jogadores iniciantes
+    - INTERMEDIARIO: Intermediários e jogadores acima
+    - AVANCADO: Avançados e profissionais
+    - PROFISSIONAL: Apenas jogadores profissionais
     """
     
     if categoria_partida == CategoriaPartida.LIVRE:
         return True
     
-    if categoria_partida == CategoriaPartida.NOOB:
-        return tipo_usuario == TipoUsuario.NOOB
-    
-    if categoria_partida == CategoriaPartida.AMADOR:
-        return tipo_usuario in [TipoUsuario.AMADOR, TipoUsuario.INTERMEDIARIO, TipoUsuario.PROPLAYER]
+    if categoria_partida == CategoriaPartida.INICIANTE:
+        return tipo_usuario == TipoUsuario.INICIANTE
     
     if categoria_partida == CategoriaPartida.INTERMEDIARIO:
-        return tipo_usuario in [TipoUsuario.INTERMEDIARIO, TipoUsuario.PROPLAYER]
+        return tipo_usuario in [TipoUsuario.INTERMEDIARIO, TipoUsuario.AVANCADO, TipoUsuario.PROFISSIONAL]
     
     if categoria_partida == CategoriaPartida.AVANCADO:
-        return tipo_usuario == TipoUsuario.PROPLAYER
+        return tipo_usuario in [TipoUsuario.AVANCADO, TipoUsuario.PROFISSIONAL]
+    
+    if categoria_partida == CategoriaPartida.PROFISSIONAL:
+        return tipo_usuario == TipoUsuario.PROFISSIONAL
     
     return False
 
@@ -40,20 +40,25 @@ def get_categorias_permitidas(tipo_usuario: TipoUsuario) -> list[CategoriaPartid
     """
     categorias = [CategoriaPartida.LIVRE]
     
-    if tipo_usuario == TipoUsuario.NOOB:
-        categorias.append(CategoriaPartida.NOOB)
-    
-    elif tipo_usuario == TipoUsuario.AMADOR:
-        categorias.append(CategoriaPartida.AMADOR)
+    if tipo_usuario == TipoUsuario.INICIANTE:
+        categorias.append(CategoriaPartida.INICIANTE)
     
     elif tipo_usuario == TipoUsuario.INTERMEDIARIO:
-        categorias.extend([CategoriaPartida.AMADOR, CategoriaPartida.INTERMEDIARIO])
+        categorias.extend([CategoriaPartida.INICIANTE, CategoriaPartida.INTERMEDIARIO])
     
-    elif tipo_usuario == TipoUsuario.PROPLAYER:
+    elif tipo_usuario == TipoUsuario.AVANCADO:
         categorias.extend([
-            CategoriaPartida.AMADOR, 
+            CategoriaPartida.INICIANTE, 
             CategoriaPartida.INTERMEDIARIO, 
             CategoriaPartida.AVANCADO
+        ])
+    
+    elif tipo_usuario == TipoUsuario.PROFISSIONAL:
+        categorias.extend([
+            CategoriaPartida.INICIANTE,
+            CategoriaPartida.INTERMEDIARIO, 
+            CategoriaPartida.AVANCADO,
+            CategoriaPartida.PROFISSIONAL
         ])
     
     return categorias
@@ -64,14 +69,14 @@ def get_nivel_minimo_categoria(categoria: CategoriaPartida) -> TipoUsuario:
     Retorna o nível mínimo necessário para uma categoria
     """
     nivel_minimo = {
-        CategoriaPartida.LIVRE: TipoUsuario.NOOB,
-        CategoriaPartida.NOOB: TipoUsuario.NOOB,
-        CategoriaPartida.AMADOR: TipoUsuario.AMADOR,
+        CategoriaPartida.LIVRE: TipoUsuario.INICIANTE,
+        CategoriaPartida.INICIANTE: TipoUsuario.INICIANTE,
         CategoriaPartida.INTERMEDIARIO: TipoUsuario.INTERMEDIARIO,
-        CategoriaPartida.AVANCADO: TipoUsuario.PROPLAYER
+        CategoriaPartida.AVANCADO: TipoUsuario.AVANCADO,
+        CategoriaPartida.PROFISSIONAL: TipoUsuario.PROFISSIONAL
     }
     
-    return nivel_minimo.get(categoria, TipoUsuario.NOOB)
+    return nivel_minimo.get(categoria, TipoUsuario.INICIANTE)
 
 
 def get_descricao_categoria(categoria: CategoriaPartida) -> str:
@@ -80,10 +85,10 @@ def get_descricao_categoria(categoria: CategoriaPartida) -> str:
     """
     descricoes = {
         CategoriaPartida.LIVRE: "Aberto para todos os níveis",
-        CategoriaPartida.NOOB: "Apenas para iniciantes",
-        CategoriaPartida.AMADOR: "Para amadores e jogadores experientes",
-        CategoriaPartida.INTERMEDIARIO: "Para intermediários e avançados",
-        CategoriaPartida.AVANCADO: "Apenas para jogadores avançados"
+        CategoriaPartida.INICIANTE: "Apenas para iniciantes",
+        CategoriaPartida.INTERMEDIARIO: "Para intermediários e níveis acima",
+        CategoriaPartida.AVANCADO: "Para jogadores avançados e profissionais",
+        CategoriaPartida.PROFISSIONAL: "Apenas para jogadores profissionais"
     }
     
     return descricoes.get(categoria, "Categoria não definida")

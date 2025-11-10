@@ -7,7 +7,7 @@ from app.models.enums import TipoUsuario, TipoPartida, StatusPartida, StatusCand
 class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
-    tipo: TipoUsuario = TipoUsuario.NOOB
+    tipo: TipoUsuario = TipoUsuario.INICIANTE
 
 class UsuarioCreate(UsuarioBase):
     senha: str
