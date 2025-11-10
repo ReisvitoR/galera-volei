@@ -63,7 +63,7 @@ class UsuarioService:
         usuario = self.get_usuario(user_id)
         
         # Verificar permissão (só pode alterar próprio perfil ou ser admin)
-        if current_user.id != user_id and current_user.tipo != TipoUsuario.PROPLAYER:
+        if current_user.id != user_id and current_user.tipo != TipoUsuario.PROFISSIONAL:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Sem permissão para alterar este usuário"
@@ -132,7 +132,7 @@ class UsuarioService:
     def deactivate_usuario(self, user_id: int, current_user: Usuario) -> Usuario:
         """Desativar usuário"""
         # Apenas admins podem desativar outros usuários
-        if current_user.tipo != TipoUsuario.PROPLAYER and current_user.id != user_id:
+        if current_user.tipo != TipoUsuario.PROFISSIONAL and current_user.id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Sem permissão para desativar este usuário"

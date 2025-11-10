@@ -76,10 +76,10 @@ def require_user_type(*allowed_types):
 
 def require_admin():
     """
-    Dependência que requer usuário admin (proplayer)
+    Dependência que requer usuário admin (profissional)
     """
     from app.models.enums import TipoUsuario
-    return require_user_type(TipoUsuario.PROPLAYER)
+    return require_user_type(TipoUsuario.PROFISSIONAL)
 
 
 def require_intermediate_or_above():
@@ -89,7 +89,8 @@ def require_intermediate_or_above():
     from app.models.enums import TipoUsuario
     return require_user_type(
         TipoUsuario.INTERMEDIARIO, 
-        TipoUsuario.PROPLAYER
+        TipoUsuario.AVANCADO,
+        TipoUsuario.PROFISSIONAL
     )
 
 
