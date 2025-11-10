@@ -28,7 +28,7 @@ def init_db():
             nome="Administrador",
             email="admin@galeravolei.com",
             senha_hash=security.get_password_hash("admin123"),
-            tipo=TipoUsuario.PROPLAYER,
+            tipo=TipoUsuario.PROFISSIONAL,
             ativo=True
         )
         db.add(admin_user)
@@ -50,7 +50,7 @@ def init_db():
                 nome="Maria Santos",
                 email="maria@exemplo.com",
                 senha_hash=security.get_password_hash("123456"),
-                tipo=TipoUsuario.AMADOR,
+                tipo=TipoUsuario.INTERMEDIARIO,
                 ativo=True,
                 partidas_jogadas=8,
                 vitorias=5,
@@ -61,7 +61,7 @@ def init_db():
                 nome="Pedro Costa",
                 email="pedro@exemplo.com",
                 senha_hash=security.get_password_hash("123456"),
-                tipo=TipoUsuario.NOOB,
+                tipo=TipoUsuario.INICIANTE,
                 ativo=True,
                 partidas_jogadas=3,
                 vitorias=1,
