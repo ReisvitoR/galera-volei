@@ -10,14 +10,14 @@ API_BASE = "http://127.0.0.1:8000"
 API_V1 = f"{API_BASE}/api/v1"
 
 def print_success(msg):
-    print(f"✅ {msg}")
+    print(f"V {msg}")
 
 def print_error(msg):
-    print(f"❌ {msg}")
+    print(f"X {msg}")
 
 def print_section(title):
     print(f"\n{'='*60}")
-    print(f"🔍 {title}")
+    print(f" {title}")
     print(f"{'='*60}")
 
 # ============================================================================
@@ -26,7 +26,7 @@ def print_section(title):
 
 def main():
     print("\n" + "="*60)
-    print("🚀 TESTE COMPLETO DA API GALERA VOLEI")
+    print(" TESTE COMPLETO DA API GALERA VOLEI")
     print("="*60)
     
     timestamp = int(time.time())
@@ -306,16 +306,14 @@ def main():
     print_section("RESUMO FINAL")
     
     print(f"""
-    ✅ Autenticação: OK
-    ✅ Criação de partidas com categorias: OK
-    ✅ Participação com validação de categoria: OK
-    ✅ Sistema de convites: OK
-    ✅ Filtros e listagens: OK
-    ✅ Gestão de partidas: OK
+    - Autenticação: OK
+    - Criação de partidas com categorias: OK
+    - Participação com validação de categoria: OK
+    - Sistema de convites: OK
+    - Filtros e listagens: OK
+    - Gestão de partidas: OK
     
-    🎉 SISTEMA PRONTO PARA O FRONTEND! 🎉
-    
-    📊 Endpoints Testados:
+    Endpoints Testados:
        - POST   /auth/register
        - POST   /partidas/
        - POST   /partidas/{{id}}/participar
@@ -330,7 +328,7 @@ def main():
        - PUT    /partidas/{{id}}
        - PATCH  /partidas/{{id}}/desativar
     
-    🚀 Backend 100% Funcional!
+     Backend 100% Funcional, Profº Rogerio & Turma!
     """)
 
 if __name__ == "__main__":

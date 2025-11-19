@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 
 def update_db():
     """Atualizar estrutura do banco de dados"""
-    logger.info("🔄 Atualizando estrutura do banco de dados...")
+    logger.info(" Atualizando estrutura do banco de dados...")
     
     try:
         # Criar apenas as tabelas que não existem
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ Estrutura do banco atualizada com sucesso")
+        logger.info(" Estrutura do banco atualizada com sucesso")
         
         # Verificar se a tabela de convites existe
         db = SessionLocal()
@@ -28,9 +28,9 @@ def update_db():
             tables = result.fetchall()
             
             if tables:
-                logger.info("✅ Tabela 'convites' existe")
+                logger.info(" Tabela 'convites' existe")
             else:
-                logger.warning("⚠️ Tabela 'convites' não encontrada")
+                logger.warning(" Tabela 'convites' não encontrada")
             
             # Verificar se a coluna 'publica' existe na tabela partidas
             result = db.execute(text("PRAGMA table_info(partidas);"))
@@ -38,19 +38,19 @@ def update_db():
             column_names = [col[1] for col in columns]
             
             if 'publica' in column_names:
-                logger.info("✅ Coluna 'publica' existe na tabela partidas")
+                logger.info(" Coluna 'publica' existe na tabela partidas")
             else:
-                logger.warning("⚠️ Coluna 'publica' não encontrada na tabela partidas")
-                logger.info("🔧 Tentando adicionar coluna 'publica'...")
+                logger.warning(" Coluna 'publica' não encontrada na tabela partidas")
+                logger.info(" Tentando adicionar coluna 'publica'...")
                 try:
                     db.execute(text("ALTER TABLE partidas ADD COLUMN publica BOOLEAN DEFAULT TRUE;"))
                     db.commit()
-                    logger.info("✅ Coluna 'publica' adicionada com sucesso")
+                    logger.info(" Coluna 'publica' adicionada com sucesso")
                 except Exception as e:
-                    logger.error(f"❌ Erro ao adicionar coluna 'publica': {e}")
+                    logger.error(f" Erro ao adicionar coluna 'publica': {e}")
             
-            logger.info("\n🎉 Verificação da estrutura do banco concluída!")
-            logger.info("📋 Tabelas verificadas:")
+            logger.info("\n Verificação da estrutura do banco concluída!")
+            logger.info(" Tabelas verificadas:")
             logger.info("   - Tabela convites")
             logger.info("   - Coluna partidas.publica")
             
@@ -58,7 +58,7 @@ def update_db():
             db.close()
             
     except Exception as e:
-        logger.error(f"❌ Erro ao atualizar banco: {e}")
+        logger.error(f" Erro ao atualizar banco: {e}")
         raise
 
 

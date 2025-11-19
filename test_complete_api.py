@@ -31,9 +31,9 @@ test_user_data = {
 def print_result(test_name: str, status_code: int, expected: list, response_data=None):
     """Imprimir resultado formatado do teste"""
     if status_code in expected:
-        status_icon = "✅"
+        status_icon = "v"
     else:
-        status_icon = "❌"
+        status_icon = "x"
     
     print(f"  {status_icon} {test_name}")
     print(f"     Status Code: {status_code} (esperado: {expected})")
@@ -42,7 +42,7 @@ def print_result(test_name: str, status_code: int, expected: list, response_data
         if "detail" in response_data:
             print(f"     Mensagem: {response_data['detail']}")
         elif status_code == 200 and "access_token" in response_data:
-            print(f"     Token gerado: ✅")
+            print(f"     Token gerado:")
     print()
 
 def get_admin_token():
@@ -53,8 +53,8 @@ def get_admin_token():
     return None
 
 def test_health_endpoints():
-    """Testar endpoints básicos de saúde"""
-    print("🏥 HEALTH CHECK ENDPOINTS")
+    """Testar endpoints básicos de saúde, não queremos mal cheiro"""
+    print("HEALTH CHECK ENDPOINTS")
     print("=" * 50)
     
     # Endpoint raiz
@@ -84,7 +84,7 @@ def test_health_endpoints():
 
 def test_auth_endpoints():
     """Testar endpoints de autenticação"""
-    print("🔐 AUTHENTICATION ENDPOINTS")
+    print("AUTHENTICATION ENDPOINTS")
     print("=" * 50)
     
     # Login com credenciais válidas
@@ -127,12 +127,12 @@ def test_auth_endpoints():
             {"user_name": response.json().get("nome")} if response.status_code == 200 else response.json()
         )
     else:
-        print("  ❌ GET /auth/me - Não foi possível obter token")
+        print("X - GET /auth/me - Não foi possível obter token")
         print()
 
 def test_user_endpoints():
     """Testar endpoints de usuários"""
-    print("👥 USER ENDPOINTS")
+    print("USER ENDPOINTS")
     print("=" * 50)
     
     token = get_admin_token()
@@ -175,12 +175,12 @@ def test_user_endpoints():
             {"user_found": response.json().get("nome")} if response.status_code == 200 else response.json()
         )
     else:
-        print("  ❌ Testes com autenticação - Token não disponível")
+        print("Testes com autenticação - Token não disponível")
         print()
 
 def test_match_endpoints():
     """Testar endpoints de partidas"""
-    print("🏐 MATCH ENDPOINTS")
+    print("MATCH ENDPOINTS")
     print("=" * 50)
     
     token = get_admin_token()
@@ -236,12 +236,12 @@ def test_match_endpoints():
                 {"match_found": response.json().get("titulo")} if response.status_code == 200 else response.json()
             )
     else:
-        print("  ❌ Testes com autenticação - Token não disponível")
+        print("Testes com autenticação - Token não disponível")
         print()
 
 def test_error_cases():
     """Testar casos de erro comuns"""
-    print("⚠️  ERROR CASES")
+    print("ERROR CASES")
     print("=" * 50)
     
     # Rota inexistente
@@ -272,7 +272,7 @@ def test_error_cases():
 
 def run_comprehensive_tests():
     """Executar todos os testes de forma organizada"""
-    print("🧪 TESTES COMPLETOS DA API - GALERA VÔLEI")
+    print("TESTES COMPLETOS DA API - GALERA VÔLEI")
     print("=" * 60)
     print()
     
@@ -293,11 +293,11 @@ def run_comprehensive_tests():
         print()
         
         print("=" * 60)
-        print("🎉 TODOS OS TESTES CONCLUÍDOS COM SUCESSO!")
+        print(" TODOS OS TESTES CONCLUÍDOS COM SUCESSO!")
         print("=" * 60)
         
     except Exception as e:
-        print(f"❌ Erro durante a execução dos testes: {e}")
+        print(f"X Erro durante a execução dos testes: {e}")
         print("=" * 60)
 
 if __name__ == "__main__":
