@@ -5,6 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.controllers import auth_controller, usuario_controller, partida_controller, convite_controller
+from app.middlewares.security import (
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware,
+    InputValidationMiddleware,
+    RequestSizeLimitMiddleware
+)
 
 # Criar tabelas do banco de dados
 Base.metadata.create_all(bind=engine)
@@ -17,6 +23,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Configurar middlewares de segurança (ordem importa: primeiro é executado por último)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)  # 100 req/min por IP
+app.add_middleware(InputValidationMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware, max_size_mb=10)  # Máximo 10MB por requisição
 
 # Configurar CORS
 app.add_middleware(
