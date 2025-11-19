@@ -118,11 +118,11 @@ class PartidaService:
         return partida
     
     def get_partidas_ativas(self, skip: int = 0, limit: int = 100, categoria: Optional[str] = None, usuario: Optional[Usuario] = None) -> List[Partida]:
-        """Listar partidas ativas com filtros opcionais"""
+        """Listar TODAS as partidas (independente do status) com filtros opcionais"""
         if categoria:
-            partidas = self.repository.get_by_categoria(categoria, skip=skip, limit=limit)
+            partidas = self.repository.get_by_categoria_todas(categoria, skip=skip, limit=limit)
         else:
-            partidas = self.repository.get_by_status(StatusPartida.ATIVA, skip=skip, limit=limit)
+            partidas = self.repository.get_todas(skip=skip, limit=limit)
         
         # Filtrar partidas acessíveis ao usuário se solicitado
         if usuario:
@@ -262,6 +262,13 @@ class PartidaService:
     def sair_partida(self, partida_id: int, usuario: Usuario) -> Partida:
         """Usuário sai de uma partida"""
         partida = self.get_partida(partida_id)
+        
+        # Verificar se a partida está finalizada ou cancelada
+        if partida.status in [StatusPartida.FINALIZADA, StatusPartida.CANCELADA]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Não é possível sair de uma partida {partida.status.value}"
+            )
         
         # Verificar se usuário está participando
         if usuario not in partida.participantes:

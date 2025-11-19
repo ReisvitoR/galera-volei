@@ -37,6 +37,29 @@ class PartidaRepository(BaseRepository[Partida]):
             .all()
         )
     
+    def get_todas(self, skip: int = 0, limit: int = 100) -> List[Partida]:
+        """Buscar TODAS as partidas (independente do status)"""
+        return (
+            self.db.query(Partida)
+            .options(joinedload(Partida.organizador))
+            .order_by(desc(Partida.data_partida))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+    
+    def get_by_categoria_todas(self, categoria: str, skip: int = 0, limit: int = 100) -> List[Partida]:
+        """Buscar TODAS as partidas por categoria (independente do status)"""
+        return (
+            self.db.query(Partida)
+            .options(joinedload(Partida.organizador))
+            .filter(Partida.categoria == categoria)
+            .order_by(desc(Partida.data_partida))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+    
     def get_by_tipo(self, tipo: TipoPartida, skip: int = 0, limit: int = 100) -> List[Partida]:
         """Buscar partidas por tipo"""
         return (
